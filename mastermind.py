@@ -6,43 +6,62 @@ from random import randint
 
 class Mastermind:
 
-    def __init__(self):
-        self.startGame()
+    def __init__(self, mode='start', guess=[], solution=[]):
+        self.pegs = ['RED',
+                     'GREEN',
+                     'YELLOW',
+                     'BLUE',
+                     'WHITE',
+                     'BLACK']
 
-    def checkGuess(self):
+        if mode == 'start':
+            self.startGame()
+        else:
+            self.guess = guess
+            self.solution = solution
+
+    def checkGuess(self, mode='start'):
         if self.guess == self.solution:
-            return self.gameOver()
+            return self.gameOver(mode)
 
-        result = []
-        solution = self.solution[:]
-        guess = self.guess[:]
-        for index, each in enumerate(guess):
-            if each == solution[index]:
-                result.append('P')
-                guess.pop(index)
-                solution.pop(index)
+        response = []
+        nonMatchedGuess = []
+        nonMatchedSolution = []
+        for index, each in enumerate(self.guess):
+            if each == self.solution[index]:
+                response.append('P')
+            else:
+                nonMatchedGuess.append(each)
+                nonMatchedSolution.append(self.solution[index])
 
-        for each in guess:
-            if guess.count(each) == solution.count(each):
-                result.append('C')
-            elif (solution.count(each) > 0 and
-                  guess.index(each) == index):
-                    result.append('C')
+        colorCount = {self.pegs[index]: 0 for index, _ in enumerate(self.pegs)}
+        for index, each in enumerate(nonMatchedGuess):
+            if (nonMatchedGuess.count(each) - colorCount[each] <=
+                nonMatchedSolution.count(each)):
+                    response.append('C')
+            else:
+                colorCount[each] += 1
 
-        print('RESPONSE %s: %s' % (self.guessCounter - 1,
-                                   ''.join(sorted(result))))
+        if mode == 'start':
+            print('RESPONSE %s: %s' % (self.guessCounter - 1,
+                                       ''.join(sorted(response))))
+        else:
+            return ''.join(sorted(response))
 
         self.getGuess()
 
-    def gameOver(self):
-        print('''
-                    CONGRATS!!
-                    You won the game in %s guesses.
+    def gameOver(self, mode='start'):
+        if mode == 'start':
+            print('''
+                        CONGRATS!!
+                        You won the game in %s guesses.
 
-                    The solution was:
-                    %s
-              ''' % (self.guessCounter - 1, ' '.join(self.solution)))
-        self.playAgain()
+                        The solution was:
+                        %s
+                  ''' % (self.guessCounter - 1, ' '.join(self.solution)))
+            self.playAgain()
+        else:
+            return 'SOLVED'
 
     def getGuess(self):
         self.guess = input('GUESS %s: ' % self.guessCounter)
@@ -52,20 +71,13 @@ class Mastermind:
             self.getGuess()
 
     def playAgain(self):
-        userInput = input('To stop playing, enter <no>:')
+        userInput = input('To stop playing, enter <STOP>:')
         userInput = userInput.lower()
 
-        if userInput != 'no':
+        if userInput != 'stop':
             self.startGame()
 
     def setSolution(self, blanks=False, multiples=False):
-        self.pegs = ['RED',
-                     'GREEN',
-                     'YELLOW',
-                     'BLUE',
-                     'WHITE',
-                     'BLACK']
-
         if blanks:
             self.pegs.append('EMPTY')
 
@@ -83,6 +95,9 @@ class Mastermind:
         params = self.getGameParams()
         self.setSolution(**params)
         self.getGuess()
+
+    def testGame(self):
+        return self.checkGuess(mode='test')
 
     def validGuess(self):
         try:
